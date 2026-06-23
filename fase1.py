@@ -3,7 +3,7 @@
 #  Pasos: Escala de grises → Redimensionar → Normalizar
 # ============================================================
 
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,10 +20,11 @@ CARPETA_SALIDA  = "datos_procesados"  # Carpeta donde se guardarán los resultad
 # ─────────────────────────────────────────
 def procesar_imagen(ruta_imagen):
     """
-    Aplica los 3 pasos de la Fase 1 a una imagen:
+    Aplica los pasos de la Fase 1 a una imagen:
       1. Convertir a escala de grises
-      2. Redimensionar a TAMAÑO x TAMAÑO
-      3. Normalizar píxeles a rango [0, 1]
+      2. Mejorar contraste (autocontrast)
+      3. Redimensionar manteniendo relación de aspecto con relleno (padding) blanco
+      4. Normalizar píxeles a rango [0, 1]
     Retorna un numpy array listo para KNN.
     """
     # Abrir imagen
@@ -32,11 +33,22 @@ def procesar_imagen(ruta_imagen):
     # PASO 1: Escala de grises
     img_gris = img.convert('L')
 
-    # PASO 2: Redimensionar
-    img_redim = img_gris.resize((TAMAÑO, TAMAÑO), Image.Resampling.LANCZOS)
+    # MEJORA: Autocontraste (Normaliza iluminación)
+    img_gris = ImageOps.autocontrast(img_gris)
+
+    # MEJORA: Redimensionar con relleno (padding) blanco manteniendo relación de aspecto
+    img_gris.thumbnail((TAMAÑO, TAMAÑO), Image.Resampling.LANCZOS)
+    
+    # Lienzo blanco de 128x128
+    img_padded = Image.new('L', (TAMAÑO, TAMAÑO), 255)
+    
+    # Centrar la imagen en el lienzo
+    x = (TAMAÑO - img_gris.width) // 2
+    y = (TAMAÑO - img_gris.height) // 2
+    img_padded.paste(img_gris, (x, y))
 
     # PASO 3: Normalizar píxeles (0-255 → 0.0-1.0)
-    img_array = np.array(img_redim, dtype='float32') / 255.0
+    img_array = np.array(img_padded, dtype='float32') / 255.0
 
     return img_array
 
@@ -81,18 +93,25 @@ def fase1_preprocesar():
                 # Procesar imagen
                 img_procesada = procesar_imagen(ruta_origen)
 
-                # Guardar como archivo .npy (numpy array)
-                nombre_npy = f"{os.path.splitext(nombre)[0]}.npy"
+                # Guardar como archivo .npy (numpy array) original
+                nombre_sin_ext = os.path.splitext(nombre)[0]
+                nombre_npy = f"{nombre_sin_ext}.npy"
                 ruta_destino = os.path.join(ruta_salida_clase, nombre_npy)
                 np.save(ruta_destino, img_procesada)
 
-                print(f"{idx:02d}. {nombre:30s} → shape: {img_procesada.shape}  min: {img_procesada.min():.2f}  max: {img_procesada.max():.2f}")
-                exitosas += 1
+                # Guardar variación horizontal reflejada (flip)
+                img_flipped = np.fliplr(img_procesada)
+                nombre_npy_flip = f"{nombre_sin_ext}_flip.npy"
+                ruta_destino_flip = os.path.join(ruta_salida_clase, nombre_npy_flip)
+                np.save(ruta_destino_flip, img_flipped)
+
+                print(f"{idx:02d}. {nombre:30s} -> shape: {img_procesada.shape}  min: {img_procesada.min():.2f}  max: {img_procesada.max():.2f} (+flip)")
+                exitosas += 2
 
             except Exception as e:
-                print(f"{idx:02d}. {nombre} → ERROR: {e}")
+                print(f"{idx:02d}. {nombre} -> ERROR: {e}")
 
-        resumen[clase] = (exitosas, len(imagenes))
+        resumen[clase] = (exitosas, len(imagenes) * 2)
 
     # ─────────────────────────────────────────
     #  RESUMEN FINAL
