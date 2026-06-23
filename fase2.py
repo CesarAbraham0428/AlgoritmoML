@@ -1,19 +1,20 @@
 import joblib
-
 import os
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-# Carpeta principal
+# ==========================
+# CARGA DE DATOS
+# ==========================
+
 RUTA_DATOS = "datos_procesados"
 
-# Datos y etiquetas
 X = []
 y = []
 
-# Recorrer cada clase
 for clase in os.listdir(RUTA_DATOS):
 
     ruta_clase = os.path.join(RUTA_DATOS, clase)
@@ -27,23 +28,24 @@ for clase in os.listdir(RUTA_DATOS):
 
             ruta_archivo = os.path.join(ruta_clase, archivo)
 
-            # Cargar imagen procesada
             imagen = np.load(ruta_archivo)
 
-            # Convertir matriz 128x128 a vector de 16384 elementos
+            # vector de características
             vector = imagen.flatten()
 
             X.append(vector)
             y.append(clase)
 
-# Convertir a numpy arrays
 X = np.array(X)
 y = np.array(y)
 
 print("Cantidad de imágenes:", len(X))
-print("Dimensión de cada imagen:", X.shape[1])
+print("Dimensión original:", X.shape[1])
 
-# División entrenamiento/prueba
+# ==========================
+# DIVISIÓN DEL DATASET
+# ==========================
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -55,16 +57,24 @@ X_train, X_test, y_train, y_test = train_test_split(
 print("Entrenamiento:", len(X_train))
 print("Prueba:", len(X_test))
 
-# Crear modelo KNN
-knn = KNeighborsClassifier(n_neighbors=3)
+# ==========================
+# MODELO FINAL KNN
+# ==========================
 
-# Entrenar
+knn = KNeighborsClassifier(
+    n_neighbors=2,
+    metric='manhattan',
+    weights='uniform'
+)
+
 knn.fit(X_train, y_train)
 
-# Predicciones
+# ==========================
+# PREDICCIÓN Y EVALUACIÓN
+# ==========================
+
 y_pred = knn.predict(X_test)
 
-# Evaluación
 print("\nAccuracy:")
 print(accuracy_score(y_test, y_pred))
 
@@ -74,4 +84,8 @@ print(confusion_matrix(y_test, y_pred))
 print("\nReporte:")
 print(classification_report(y_test, y_pred))
 
-joblib.dump(knn, "modelo_knn.pkl")
+# ==========================
+# GUARDAR MODELO
+# ==========================
+
+joblib.dump(knn, "modelo_knn_final.pkl")
