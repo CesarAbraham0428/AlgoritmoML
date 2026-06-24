@@ -6,7 +6,6 @@
 from PIL import Image, ImageOps
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 # ─────────────────────────────────────────
 #  CONFIGURACIÓN
@@ -137,6 +136,7 @@ def verificar_resultado(n_muestras=2):
     Muestra una comparación visual: original vs procesada
     para verificar que la Fase 1 funcionó correctamente.
     """
+    import matplotlib.pyplot as plt
     clases = [d for d in os.listdir(CARPETA_SALIDA)
               if os.path.isdir(os.path.join(CARPETA_SALIDA, d))]
 
