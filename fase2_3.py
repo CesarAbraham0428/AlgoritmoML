@@ -80,6 +80,8 @@ for clase in os.listdir(RUTA_DATOS):
 
 X = np.array(X)
 y = np.array(y)
+print(X)
+print(y)
 
 if len(X) == 0:
     print("Error: No se encontraron archivos .npy en los datos procesados.")
@@ -96,6 +98,9 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42,
     stratify=y
 )
+
+print(X_train)
+print(X_test)
 
 print(f"Entrenamiento: {len(X_train)} muestras")
 print(f"Prueba: {len(X_test)} muestras")
@@ -140,12 +145,13 @@ if os.path.exists(ruta_nueva_imagen):
     print(f"Procesando imagen de entrada: '{ruta_nueva_imagen}'...")
     # Preprocesar usando la función optimizada de la Fase 1
     imagen_procesada = procesar_imagen(ruta_nueva_imagen)
-    
+
     # Convertir a un vector de 1 fila (1, -1)
     vector_nuevo = imagen_procesada.flatten().reshape(1, -1)
-    
+
     # Predicción en caliente usando el modelo knn en memoria
     prediccion = knn.predict(vector_nuevo)
+    print(prediccion)
     print(f"Clase predicha: {prediccion[0]}")
 else:
     print(f"Aviso: No se pudo realizar la predicción porque no se encontró la imagen '{ruta_nueva_imagen}'.")
