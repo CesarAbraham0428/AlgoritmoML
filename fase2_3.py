@@ -6,8 +6,47 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-# Importar la función de preprocesamiento de la Fase 1
-from fase1 import procesar_imagen
+from PIL import Image, ImageOps
+
+# ==========================================
+# CONFIGURACIÓN Y PREPROCESAMIENTO DE IMÁGENES
+# ==========================================
+TAMAÑO = 128  # Tamaño objetivo de 128x128 píxeles
+
+def procesar_imagen(ruta_imagen):
+    """
+    Aplica los pasos necesarios para transformar una imagen nueva:
+      1. Convertir a escala de grises
+      2. Mejorar contraste (autocontrast)
+      3. Redimensionar manteniendo relación de aspecto con relleno (padding) blanco
+      4. Normalizar píxeles a rango [0, 1]
+    Retorna un numpy array listo para KNN.
+    """
+    # Abrir imagen
+    img = Image.open(ruta_imagen)
+
+    # PASO 1: Escala de grises
+    img_gris = img.convert('L')
+
+    # MEJORA: Autocontraste (Normaliza iluminación)
+    img_gris = ImageOps.autocontrast(img_gris)
+
+    # MEJORA: Redimensionar con relleno (padding) blanco manteniendo relación de aspecto
+    img_gris.thumbnail((TAMAÑO, TAMAÑO), Image.Resampling.LANCZOS)
+    
+    # Lienzo blanco de 128x128
+    img_padded = Image.new('L', (TAMAÑO, TAMAÑO), 255)
+    
+    # Centrar la imagen en el lienzo
+    x = (TAMAÑO - img_gris.width) // 2
+    y = (TAMAÑO - img_gris.height) // 2
+    img_padded.paste(img_gris, (x, y))
+
+    # PASO 3: Normalizar píxeles (0-255 → 0.0-1.0)
+    img_array = np.array(img_padded, dtype='float32') / 255.0
+
+    return img_array
+
 
 # ==========================================
 # FASE 2: CARGA DE DATOS Y ENTRENAMIENTO
