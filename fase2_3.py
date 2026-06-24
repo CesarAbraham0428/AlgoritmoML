@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 from PIL import Image, ImageOps
 
@@ -109,6 +111,33 @@ knn = KNeighborsClassifier(
 )
 knn.fit(X_train, y_train)
 
+# ==========================================
+# VISUALIZACIÓN PCA DEL DATASET
+# ==========================================
+
+pca = PCA(n_components=2)
+
+X_train_pca = pca.fit_transform(X_train)
+
+plt.figure(figsize=(10,6))
+
+for clase in np.unique(y_train):
+    indices = y_train == clase
+
+    plt.scatter(
+        X_train_pca[indices, 0],
+        X_train_pca[indices, 1],
+        label=clase
+    )
+
+plt.title("Distribución de las prendas (PCA)")
+plt.xlabel("Componente Principal 1")
+plt.ylabel("Componente Principal 2")
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
 # Predicción y evaluación
 y_pred = knn.predict(X_test)
 
@@ -134,7 +163,7 @@ print("FASE 3: INFERENCIA CON IMAGEN NUEVA")
 print("="*40)
 
 # Imagen de prueba
-ruta_nueva_imagen = "datos/tenis/tenis63.jpeg"
+ruta_nueva_imagen = "imagen1.jpeg"
 
 if os.path.exists(ruta_nueva_imagen):
     print(f"Procesando imagen de entrada: '{ruta_nueva_imagen}'...")
@@ -146,6 +175,67 @@ if os.path.exists(ruta_nueva_imagen):
     
     # Predicción en caliente usando el modelo knn en memoria
     prediccion = knn.predict(vector_nuevo)
+
+    # Obtener vecinos más cercanos
+    distancias, indices = knn.kneighbors(vector_nuevo)
+
+    # Transformar imagen nueva al espacio PCA
+    nuevo_pca = pca.transform(vector_nuevo)
+
+    # Coordenadas de vecinos
+    vecinos_pca = X_train_pca[indices[0]]
+
+    plt.figure(figsize=(10,6))
+
+    # Dibujar dataset completo
+    for clase in np.unique(y_train):
+        mask = y_train == clase
+
+        plt.scatter(
+            X_train_pca[mask,0],
+            X_train_pca[mask,1],
+            alpha=0.5,
+            label=clase
+        )
+
+    # Dibujar vecinos
+    plt.scatter(
+        vecinos_pca[:,0],
+        vecinos_pca[:,1],
+        s=250,
+        marker='s',
+        edgecolors='black',
+        label='Vecinos KNN'
+    )
+
+    # Dibujar imagen nueva
+    plt.scatter(
+        nuevo_pca[0,0],
+        nuevo_pca[0,1],
+        s=400,
+        marker='*',
+        label='Imagen nueva'
+    )
+
+    # Líneas hacia vecinos
+    for vecino in vecinos_pca:
+        plt.plot(
+            [nuevo_pca[0,0], vecino[0]],
+            [nuevo_pca[0,1], vecino[1]]
+        )
+
+    plt.title(
+        f"Clasificación KNN\nPredicción: {prediccion[0]}"
+    )
+
+    plt.xlabel("Componente Principal 1")
+    plt.ylabel("Componente Principal 2")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.show()
+
     print(f"Clase predicha: {prediccion[0]}")
 else:
     print(f"Aviso: No se pudo realizar la predicción porque no se encontró la imagen '{ruta_nueva_imagen}'.")
