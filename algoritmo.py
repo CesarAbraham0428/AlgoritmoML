@@ -67,30 +67,22 @@ y_prediccion = knn.predict(X_prueba)
 print("EVALUACIÓN DEL MODELO")
 print(f"Accuracy: {accuracy_score(y_prueba, y_prediccion):.4f}")
 
-ruta_nueva_imagen = "imagen.jpg"
+ruta_nueva_imagen = "img.jpg"
 if os.path.exists(ruta_nueva_imagen):
     print(f"Procesando imagen de entrada: '{ruta_nueva_imagen}'...")
     imagen_procesada = procesar_imagen(ruta_nueva_imagen)
     vector_nuevo = imagen_procesada.flatten().reshape(1, -1)
     prediccion = knn.predict(vector_nuevo)
 
-    distancias, indices = knn.kneighbors(vector_nuevo)
     nuevo_pca = pca.transform(vector_nuevo)
-    vecinos_pca = X_entrenamiento_pca[indices[0]]
 
     plt.figure(figsize=(10, 6))
     for clase in np.unique(y_entrenamiento):
         mascara = y_entrenamiento == clase
         plt.scatter(X_entrenamiento_pca[mascara, 0], X_entrenamiento_pca[mascara, 1], alpha=0.5, label=clase)
 
-    # Dibujar líneas punteadas hacia los vecinos
-    for vecino in vecinos_pca:
-        plt.plot([nuevo_pca[0, 0], vecino[0]], [nuevo_pca[0, 1], vecino[1]], color='gray', linestyle='--', alpha=0.8)
-
-    # Graficar vecinos destacados con bordes
-    plt.scatter(vecinos_pca[:, 0], vecinos_pca[:, 1], s=150, facecolors='none', edgecolors='black', linewidths=1.5, label='Vecinos KNN')
     # Graficar punto nuevo como un círculo rojo destacado
-    plt.scatter(nuevo_pca[0, 0], nuevo_pca[0, 1], s=200, color='red', edgecolors='black', linewidths=2, label='Imagen nueva')
+    plt.scatter(nuevo_pca[0, 0], nuevo_pca[0, 1], s=100, color='red', linewidths=2, label='Nueva imagen')
 
     plt.title(f"Clasificación KNN\nPredicción: {prediccion[0]}")
     plt.xlabel("Componente Principal 1")
