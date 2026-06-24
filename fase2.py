@@ -61,10 +61,12 @@ print("Prueba:", len(X_test))
 # MODELO FINAL KNN
 # ==========================
 
+# Usamos la combinación óptima de hiperparámetros:
+# K=2, distancia Manhattan y pesos basados en la distancia (evita empates y da más valor a los más cercanos)
 knn = KNeighborsClassifier(
     n_neighbors=2,
     metric='manhattan',
-    weights='uniform'
+    weights='distance'
 )
 
 knn.fit(X_train, y_train)
